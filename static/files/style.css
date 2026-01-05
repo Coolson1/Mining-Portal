@@ -1,0 +1,173 @@
+/* static/files/style.css - Project-specific styles */
+body {
+  /* Add a light background and comfortable font spacing */
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 0;
+}
+.container {
+  /* Slightly narrow the main content for readability */
+  max-width: 900px;
+}
+.list-group-item h5 {
+  /* Ensure file titles are not too large */
+  margin: 0;
+}
+
+/* Auth page styles */
+/* Modern vibrant auth styles */
+body.auth-bg {
+  font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  background: radial-gradient(1200px 600px at 10% 10%, rgba(143,211,255,0.12), transparent 10%),
+              radial-gradient(900px 400px at 90% 90%, rgba(108,142,245,0.08), transparent 10%),
+              linear-gradient(135deg, #f0f8ff 0%, #eef6ff 40%, #f6f0ff 100%);
+  color: #0f172a;
+}
+.auth-card-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.auth-card {
+  width: 100%;
+  max-width: 520px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9));
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(16,24,40,0.12);
+  padding: 2rem;
+  border: 1px solid rgba(15,23,42,0.04);
+}
+.auth-card h1 {
+  font-size: 1.4rem;
+  margin: 0;
+  font-weight: 700;
+}
+.auth-card p.lead {
+  color: #4b5563;
+  margin: 0.25rem 0 1rem 0;
+  font-size: 0.95rem;
+}
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1rem;
+}
+.logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg,#6c8ef5,#8fd3ff,#a08bff);
+  box-shadow: 0 6px 18px rgba(100,116,255,0.12);
+}
+.auth-card input[type="text"],
+.auth-card input[type="password"],
+.auth-card input[type="email"],
+.auth-card select,
+.auth-card textarea {
+  width: 100%;
+  border: 1px solid rgba(15,23,42,0.08);
+  background: rgba(255,255,255,0.98);
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.auth-card input:focus,
+.auth-card select:focus,
+.auth-card textarea:focus {
+  outline: none;
+  border-color: rgba(108,142,245,0.9);
+  box-shadow: 0 6px 20px rgba(108,142,245,0.12);
+}
+.auth-card .btn-primary {
+  background: linear-gradient(90deg,#6c8ef5,#8fd3ff);
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  padding: 0.65rem 1.1rem;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(108,142,245,0.12);
+}
+.auth-card .auth-link {
+  color: #6c8ef5;
+  text-decoration: none;
+  font-weight: 600;
+}
+.auth-card .auth-link:hover {
+  text-decoration: underline;
+}
+.alert-danger {
+  background: #fff1f2;
+  border-color: #fecaca;
+  color: #7f1d1d;
+}
+
+
+/* Home page styles */
+.hero {
+  background: linear-gradient(90deg,#e8f0ff 0%,#f7f9ff 100%);
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.04);
+}
+.hero-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: #0f172a;
+}
+.controls .search-input {
+  max-width: 320px;
+  display: inline-block;
+}
+.card {
+  border: 0;
+  overflow: hidden;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(15,23,42,0.08); }
+.icon-box {
+  width:48px; height:48px; border-radius:10px; background:linear-gradient(135deg,#60a5fa,#7dd3fc);
+  display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:1.05rem;
+}
+.file-card { cursor: default; }
+.meta { color: #6b7280; }
+.text-truncate { color: #6b7280; font-size: .9rem; }
+.empty-state { color: #6b7280; }
+
+/* Responsive tweaks */
+@media (max-width: 576px){
+  .hero-title { font-size: 1.25rem; }
+  .controls .btn-group { margin-bottom: .5rem; }
+}
+
+/* More responsive behaviors */
+@media (max-width: 768px) {
+  .controls { padding-left: .5rem; padding-right: .5rem; }
+  .controls .col-md-6 { width: 100%; }
+  .controls .search-input { width: 100%; margin-top: .5rem; }
+  .icon-box { width:42px; height:42px; }
+  .card .card-body { padding: .9rem; }
+  .card .mt-3.d-flex { flex-direction: column; gap: .5rem; }
+  .card .btn { width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .hero { padding: 16px; }
+  .hero-title { font-size: 1.1rem; }
+  .icon-box { width:40px; height:40px; font-size: .95rem }
+  .preview-frame { height: 60vh; }
+}
+
+/* Ensure images scale within cards and previews */
+.card img, .preview-frame, .card .icon-box img { max-width: 100%; height: auto; display: block; }
+
+/* Navbar tweaks */
+.navbar-brand { font-weight: 700; letter-spacing: .2px; }
+.navbar .nav-link { padding-left: .6rem; padding-right: .6rem; }
+
+
+
