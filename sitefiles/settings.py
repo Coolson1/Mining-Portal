@@ -82,6 +82,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 # Additional directories to look for static files during development.
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / "staticfiles" # new
 
 # Media files (user uploaded files) settings.
 MEDIA_URL = '/media/'

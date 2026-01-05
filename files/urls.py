@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns # new
 # path is used to map URL patterns to view callables.
 from . import views
 # Import views from the current app to connect them to URLs.
@@ -25,3 +26,5 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     # Student login page.
 ]
+
+urlpatterns += staticfiles_urlpatterns() # new
