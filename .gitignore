@@ -3,5 +3,3 @@ env311/
 __pycache__/
 env311_old/
 env311_old/
-db.sqlite3
-db_backups/
