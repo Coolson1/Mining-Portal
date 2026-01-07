@@ -108,3 +108,13 @@ if GMAIL_HOST_USER and GMAIL_APP_PASSWORD:
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FROM_EMAIL = 'no-reply@fourahbay.example'
+
+# Warn if running in production mode but still using the console email backend
+if not DEBUG and EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
+    import warnings
+    warnings.warn(
+        'DEBUG is False but EMAIL_BACKEND is console.EmailBackend.\n'
+        'Emails will not be delivered to real addresses.\n'
+        'Set GMAIL_HOST_USER and GMAIL_APP_PASSWORD in environment or configure a real SMTP backend for production.',
+        RuntimeWarning
+    )
