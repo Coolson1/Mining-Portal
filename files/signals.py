@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 from django.contrib.auth.models import User
 from .models import EmailLog
 from .models import FileUpload
+from .utils import send_email_and_log
 
 @receiver(post_save, sender=FileUpload)
 def file_uploaded_notify(sender, instance, created, **kwargs):
@@ -26,12 +27,12 @@ def file_uploaded_notify(sender, instance, created, **kwargs):
         f'Upload date: {instance.uploaded_at}\n'
     )
     try:
-        res = send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, recipients, fail_silently=False)
-        EmailLog.objects.create(subject=subject, body=body, from_email=settings.DEFAULT_FROM_EMAIL, recipients=','.join(recipients), sent=bool(res))
+        # Prefer the helper which records detailed errors and tracebacks.
+        ok = send_email_and_log(subject, body, settings.DEFAULT_FROM_EMAIL, recipients)
+        # If helper returned False it has already recorded the failure in EmailLog.
     except Exception:
-        # fail silently to avoid admin crash
-        # fail silently to avoid admin crash but record the error
+        # Avoid raising from signal handler; attempt to record a minimal EmailLog entry.
         try:
-            EmailLog.objects.create(subject=subject, body=body, from_email=settings.DEFAULT_FROM_EMAIL, recipients=','.join(recipients), sent=False, error='send failed')
+            EmailLog.objects.create(subject=subject, body=body, from_email=settings.DEFAULT_FROM_EMAIL, recipients=','.join(recipients), sent=False, error='send failed (exception in signal)')
         except Exception:
             pass

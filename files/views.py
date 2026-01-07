@@ -21,6 +21,7 @@ from django.utils import timezone
 from django.core.mail import send_mail
 import shutil
 import datetime
+from .utils import send_email_and_log
 
 
 def index(request, level=None, category=None, semester=None):
@@ -155,21 +156,16 @@ def register(request):
             if user_email:
                 sent = False
                 try:
-                    # Use helper to send and log email if available
-                    try:
-                        from .utils import send_email_and_log
+                        # Use centralized helper to send and log the welcome email. The helper
+                        # records a detailed traceback on failure in the EmailLog table.
                         ok = send_email_and_log('Welsome to our platform', f'Hello {username}, thank you for registering.', settings.DEFAULT_FROM_EMAIL, [user_email])
                         if ok:
                             messages.info(request, 'A welcome email was sent to your address.')
                         else:
-                            messages.warning(request, 'Registration succeeded but we could not send a welcome email.')
+                            messages.warning(request, 'Registration succeeded but we could not send a welcome email. Check server logs or EmailLog.')
                     except Exception:
-                        # Fallback to direct send and basic logging
-                        result = send_mail('Welsome to our platform', f'Hello {username}, thank you for registering.', settings.DEFAULT_FROM_EMAIL, [user_email], fail_silently=False)
-                        EmailLog.objects.create(subject='Welsome to our platform', body=f'Hello {username}, thank you for registering.', from_email=settings.DEFAULT_FROM_EMAIL, recipients=user_email, sent=bool(result))
-                        messages.info(request, 'A welcome email was sent to your address.')
-                except Exception:
-                    messages.warning(request, 'Registration succeeded but sending the welcome email failed. Please check email settings.')
+                        # Do not raise here; inform the user and continue registration flow.
+                        messages.warning(request, 'Registration succeeded but sending the welcome email failed. Please check email settings.')
             else:
                 messages.info(request, 'Registration succeeded (no email provided).')
 

@@ -8,6 +8,7 @@ from django.core.mail import send_mail
 from django.contrib import messages
 import random, string
 from django.conf import settings
+from .utils import send_email_and_log
 
 from .models import FileUpload, StudentProfile, EmailLog
 
@@ -93,17 +94,18 @@ class UserAdmin(DjangoUserAdmin):
             user.set_password(pwd)
             user.save()
             if user.email:
+                # Use helper to send email and create EmailLog with detailed errors on failure.
+                subject = 'Your password has been reset'
+                body = f'Hello {user.username},\n\nYour password has been reset by an admin. Temporary password: {pwd}\nPlease login and change your password.'
                 try:
-                    res = send_mail(
-                        'Your password has been reset',
-                        f'Hello {user.username},\n\nYour password has been reset by an admin. Temporary password: {pwd}\nPlease login and change your password.',
-                        settings.DEFAULT_FROM_EMAIL,
-                        [user.email],
-                        fail_silently=False,
-                    )
-                    EmailLog.objects.create(subject='Your password has been reset', body=f'Temp password: {pwd}', from_email=settings.DEFAULT_FROM_EMAIL, recipients=user.email, sent=bool(res))
+                    ok = send_email_and_log(subject, body, settings.DEFAULT_FROM_EMAIL, [user.email])
+                    # helper already records EmailLog; we only inform admin via messages
                 except Exception as exc:
-                    EmailLog.objects.create(subject='Your password has been reset', body=f'Temp password: {pwd}', from_email=settings.DEFAULT_FROM_EMAIL, recipients=user.email, sent=False, error=str(exc))
+                    # As a last-resort fallback, record a failed EmailLog entry.
+                    try:
+                        EmailLog.objects.create(subject=subject, body=body, from_email=settings.DEFAULT_FROM_EMAIL, recipients=user.email, sent=False, error=str(exc))
+                    except Exception:
+                        pass
         self.message_user(request, 'Selected users have been reset and (if they have an email) notified.')
     reset_passwords.short_description = 'Reset password for selected users and email them'
 
