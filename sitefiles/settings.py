@@ -1,8 +1,18 @@
 # Django settings for the project.
 import os
-# os is used to construct file paths and interact with the environment.
+"""os is used to access environment variables and construct paths."""
 from pathlib import Path
-# Path provides an easy-to-use path API for filesystem paths.
+"""Path provides an easy-to-use path API for filesystem paths."""
+# Try to load a local .env file when present (development convenience).
+try:
+    # Import here so prod systems without python-dotenv won't fail unless they rely on .env
+    from dotenv import load_dotenv  # type: ignore
+    # Load .env from project root if present, but do not override existing env vars.
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    load_dotenv(BASE_DIR / '.env', override=False)
+except Exception:
+    # If python-dotenv isn't installed or .env doesn't exist, continue silently.
+    pass
 
 # BASE_DIR is the root folder of the project (two levels up from this file).
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -11,7 +21,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'replace-this-with-a-secure-key-for-production'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Allow overriding DEBUG with an environment variable. Defaults to True for development.
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
 # Hosts allowed to serve the project; in development this can be empty or localhost.
 ALLOWED_HOSTS = ['*']
@@ -91,30 +102,47 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email settings: default to console backend for development. To send real emails
-# Email settings: use console backend by default for development. If you set
-# the environment variables `GMAIL_HOST_USER` and `GMAIL_APP_PASSWORD` the
-# project will automatically use Gmail SMTP with the provided app password.
+# Email configuration: choose backend based on environment variables.
+# Priority order:
+# 1) If GMAIL_HOST_USER and GMAIL_APP_PASSWORD are set, use Gmail SMTP.
+# 2) If USE_LOCAL_SMTP is truthy, point SMTP to a local server (MailHog on 1025).
+# 3) Otherwise fall back to console backend (development friendly; does not send email).
 GMAIL_HOST_USER = os.environ.get('GMAIL_HOST_USER')
 GMAIL_APP_PASSWORD = os.environ.get('GMAIL_APP_PASSWORD')
+USE_LOCAL_SMTP = os.environ.get('USE_LOCAL_SMTP', '').lower() in ('1', 'true', 'yes')
+
 if GMAIL_HOST_USER and GMAIL_APP_PASSWORD:
+    # Configure Gmail SMTP using supplied credentials (recommended for production).
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.gmail.com'
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('1', 'true', 'yes')
     EMAIL_HOST_USER = GMAIL_HOST_USER
     EMAIL_HOST_PASSWORD = GMAIL_APP_PASSWORD
-    DEFAULT_FROM_EMAIL = GMAIL_HOST_USER
+    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', GMAIL_HOST_USER)
+elif USE_LOCAL_SMTP:
+    # Development helper: point to a local SMTP debugging server such as MailHog.
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'localhost')
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 1025))
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False').lower() in ('1', 'true', 'yes')
+    EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'no-reply@example.com')
 else:
+    # Safe default for development: print messages to console rather than attempting delivery.
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    DEFAULT_FROM_EMAIL = 'no-reply@fourahbay.example'
+    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'no-reply@fourahbay.example')
 
-# Warn if running in production mode but still using the console email backend
+# Warn if running in production mode but still using the console email backend.
+# This helps catch a common misconfiguration where DEBUG is False but no SMTP is configured.
 if not DEBUG and EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBackend':
-    import warnings
+    import warnings  # local import to avoid top-level noise
     warnings.warn(
-        'DEBUG is False but EMAIL_BACKEND is console.EmailBackend.\n'
-        'Emails will not be delivered to real addresses.\n'
-        'Set GMAIL_HOST_USER and GMAIL_APP_PASSWORD in environment or configure a real SMTP backend for production.',
-        RuntimeWarning
+        (
+            'DEBUG is False but EMAIL_BACKEND is console.EmailBackend.\n'
+            'Emails will not be delivered to real addresses.\n'
+            'Set GMAIL_HOST_USER and GMAIL_APP_PASSWORD in environment or configure a real SMTP backend for production.'
+        ),
+        RuntimeWarning,
     )
