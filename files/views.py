@@ -154,18 +154,22 @@ def register(request):
             user_email = form.cleaned_data.get('email')
             username = form.cleaned_data.get('username')
             if user_email:
-                sent = False
+                # Use centralized helper to send and log the welcome email. The helper
+                # records a detailed traceback on failure in the EmailLog table.
                 try:
-                        # Use centralized helper to send and log the welcome email. The helper
-                        # records a detailed traceback on failure in the EmailLog table.
-                        ok = send_email_and_log('Welsome to our platform', f'Hello {username}, thank you for registering.', settings.DEFAULT_FROM_EMAIL, [user_email])
-                        if ok:
-                            messages.info(request, 'A welcome email was sent to your address.')
-                        else:
-                            messages.warning(request, 'Registration succeeded but we could not send a welcome email. Check server logs or EmailLog.')
-                    except Exception:
-                        # Do not raise here; inform the user and continue registration flow.
-                        messages.warning(request, 'Registration succeeded but sending the welcome email failed. Please check email settings.')
+                    ok = send_email_and_log(
+                        'Welsome to our platform',
+                        f'Hello {username}, thank you for registering.',
+                        settings.DEFAULT_FROM_EMAIL,
+                        [user_email],
+                    )
+                    if ok:
+                        messages.info(request, 'A welcome email was sent to your address.')
+                    else:
+                        messages.warning(request, 'Registration succeeded but we could not send a welcome email. Check server logs or EmailLog.')
+                except Exception:
+                    # Do not raise here; inform the user and continue registration flow.
+                    messages.warning(request, 'Registration succeeded but sending the welcome email failed. Please check email settings.')
             else:
                 messages.info(request, 'Registration succeeded (no email provided).')
 
