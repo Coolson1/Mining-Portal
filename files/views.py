@@ -8,32 +8,42 @@ import mimetypes
 # mimetypes helps guess the correct Content-Type for the downloaded file.
 from django.utils.encoding import smart_str
 # smart_str helps ensure filenames are encoded safely for HTTP headers.
-from .models import FileUpload, CATEGORY_CHOICES
+from .models import FileUpload, CATEGORY_CHOICES, SEMESTER_CHOICES
 from .forms import StudentRegistrationForm
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse
+from django.conf import settings
+from collections import OrderedDict
+from django.utils import timezone
 # messages can show feedback to users on registration/login.
+from django.core.mail import send_mail
+import shutil
+import datetime
 
 
-def index(request, level=None, category=None):
+def index(request, level=None, category=None, semester=None):
     # View for the home page that lists uploaded files.
     # If `level` and/or `category` provided, filter files accordingly.
-    files = FileUpload.objects.order_by('-uploaded_at')
+    # Only show non-archived files on the public home page
+    files_qs = FileUpload.objects.filter(archived=False).order_by('-uploaded_at')
     # Build a simple level list for the template (1..5) and category list from model choices.
     levels = [1, 2, 3, 4, 5]
     current_level = None
     # Build categories list from model-level choices so template can iterate labels and keys.
     categories = [{'key': k, 'label': v} for k, v in CATEGORY_CHOICES]
     current_category = None
+    # Semesters for the template
+    semesters = [{'key': k, 'label': v} for k, v in SEMESTER_CHOICES]
+    current_semester = None
 
     # Apply level filter if provided and valid.
     if level:
         try:
             level_int = int(level)
             if level_int in levels:
-                files = files.filter(level=level_int)
+                files_qs = files_qs.filter(level=level_int)
                 current_level = level_int
         except (TypeError, ValueError):
             current_level = None
@@ -43,13 +53,44 @@ def index(request, level=None, category=None):
         # Accept either the key (notes, past_papers, assignments) or a display label.
         valid_keys = [k for k, _ in CATEGORY_CHOICES]
         if category in valid_keys:
-            files = files.filter(category=category)
+            files_qs = files_qs.filter(category=category)
             current_category = category
 
+    # Apply semester filter if provided
+    if semester:
+        try:
+            sem_int = int(semester)
+            valid_semesters = [k for k, _ in SEMESTER_CHOICES]
+            if sem_int in valid_semesters:
+                files_qs = files_qs.filter(semester=sem_int)
+                current_semester = sem_int
+        except (TypeError, ValueError):
+            current_semester = None
+
+    # Group files by date (YYYY-MM-DD) so the template can render a date header
+    # followed by the files uploaded on that date.
+    groups = OrderedDict()
+    for f in files_qs:
+        # Use the timezone-aware date if available.
+        try:
+            d = timezone.localtime(f.uploaded_at).date()
+        except Exception:
+            d = f.uploaded_at.date()
+        key = d.strftime('%Y-%m-%d')
+        groups.setdefault(key, []).append(f)
+
+    # Check for likely OneDrive-synced project folder which can overwrite db.sqlite3
+    # and cause 'missing user' issues when files are synced across devices.
+    db_path = settings.DATABASES.get('default', {}).get('NAME', '')
+    if isinstance(db_path, str) and 'onedrive' in db_path.lower():
+        messages.warning(request, 'Warning: project appears inside OneDrive. Database file may be overwritten by sync; consider moving the project or the DB to a stable location.')
+
     return render(request, 'files/index.html', {
-        'files': files,
+        'files_groups': groups,
         'levels': levels,
         'current_level': current_level,
+        'semesters': semesters,
+        'current_semester': current_semester,
         'categories': categories,
         'current_category': current_category,
     })
@@ -95,6 +136,43 @@ def register(request):
         form = StudentRegistrationForm(request.POST)
         if form.is_valid():
             form.save()
+            # Make a quick DB backup after a new registration to reduce risk of OneDrive overwrites
+            try:
+                db_path = settings.DATABASES.get('default', {}).get('NAME')
+                if db_path:
+                    db_file = str(db_path)
+                    if os.path.exists(db_file):
+                        backups_dir = os.path.join(settings.BASE_DIR, 'db_backups')
+                        os.makedirs(backups_dir, exist_ok=True)
+                        ts = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+                        shutil.copy2(db_file, os.path.join(backups_dir, f'db_backup_{ts}.sqlite3'))
+            except Exception:
+                pass
+
+            # Send welcome email to the newly registered user and inform them
+            user_email = form.cleaned_data.get('email')
+            username = form.cleaned_data.get('username')
+            if user_email:
+                sent = False
+                try:
+                    # Use helper to send and log email if available
+                    try:
+                        from .utils import send_email_and_log
+                        ok = send_email_and_log('Welsome to our platform', f'Hello {username}, thank you for registering.', settings.DEFAULT_FROM_EMAIL, [user_email])
+                        if ok:
+                            messages.info(request, 'A welcome email was sent to your address.')
+                        else:
+                            messages.warning(request, 'Registration succeeded but we could not send a welcome email.')
+                    except Exception:
+                        # Fallback to direct send and basic logging
+                        result = send_mail('Welsome to our platform', f'Hello {username}, thank you for registering.', settings.DEFAULT_FROM_EMAIL, [user_email], fail_silently=False)
+                        EmailLog.objects.create(subject='Welsome to our platform', body=f'Hello {username}, thank you for registering.', from_email=settings.DEFAULT_FROM_EMAIL, recipients=user_email, sent=bool(result))
+                        messages.info(request, 'A welcome email was sent to your address.')
+                except Exception:
+                    messages.warning(request, 'Registration succeeded but sending the welcome email failed. Please check email settings.')
+            else:
+                messages.info(request, 'Registration succeeded (no email provided).')
+
             messages.success(request, 'Registration successful. Please log in.')
             return redirect('files:login')
     else:
@@ -109,6 +187,18 @@ def login_view(request):
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
         if user is not None:
+            # On successful login, create a lightweight DB backup to reduce data loss
+            try:
+                db_path = settings.DATABASES.get('default', {}).get('NAME')
+                if db_path:
+                    db_file = str(db_path)
+                    if os.path.exists(db_file):
+                        backups_dir = os.path.join(settings.BASE_DIR, 'db_backups')
+                        os.makedirs(backups_dir, exist_ok=True)
+                        ts = datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+                        shutil.copy2(db_file, os.path.join(backups_dir, f'db_login_backup_{ts}.sqlite3'))
+            except Exception:
+                pass
             login(request, user)
             return redirect('files:home')
         else:

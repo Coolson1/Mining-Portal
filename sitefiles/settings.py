@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'files',
+    'files.apps.FilesConfig',
 ]
 
 # Middleware processes requests/responses; keep Django defaults for now.
@@ -90,3 +90,21 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Email settings: default to console backend for development. To send real emails
+# Email settings: use console backend by default for development. If you set
+# the environment variables `GMAIL_HOST_USER` and `GMAIL_APP_PASSWORD` the
+# project will automatically use Gmail SMTP with the provided app password.
+GMAIL_HOST_USER = os.environ.get('GMAIL_HOST_USER')
+GMAIL_APP_PASSWORD = os.environ.get('GMAIL_APP_PASSWORD')
+if GMAIL_HOST_USER and GMAIL_APP_PASSWORD:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = GMAIL_HOST_USER
+    EMAIL_HOST_PASSWORD = GMAIL_APP_PASSWORD
+    DEFAULT_FROM_EMAIL = GMAIL_HOST_USER
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'no-reply@fourahbay.example'

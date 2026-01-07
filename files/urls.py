@@ -16,6 +16,7 @@ urlpatterns = [
     path('level/<int:level>/', views.index, name='level'),
     # Home page filtered by level (1-5).
     path('category/<slug:category>/', views.index, name='category'),
+    path('semester/<int:semester>/', views.index, name='semester'),
     # Home page filtered by category (notes, past_papers, assignments).
     path('download/<int:pk>/', views.download_file, name='download'),
     path('preview/<int:pk>/', views.preview_file, name='preview'),

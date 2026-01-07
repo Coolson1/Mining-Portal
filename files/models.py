@@ -21,6 +21,12 @@ CATEGORY_CHOICES = [
     ('assignments', 'Assignments'),
 ]
 
+# Semester choices for uploaded files
+SEMESTER_CHOICES = [
+    (1, 'Semester 1'),
+    (2, 'Semester 2'),
+]
+
 
 class FileUpload(models.Model):
     # Model representing an uploaded file with a title, level, category and timestamp.
@@ -34,6 +40,12 @@ class FileUpload(models.Model):
     # CharField with choices to restrict category values and display readable labels.
     uploaded_at = models.DateTimeField(auto_now_add=True)
     # Timestamp automatically set when the object is first created.
+    semester = models.PositiveSmallIntegerField(choices=SEMESTER_CHOICES, default=1)
+    # Semester of the uploaded file (1 or 2).
+    uploaded_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    # The user who uploaded the file (set in admin save or upload view).
+    archived = models.BooleanField(default=False)
+    # Mark item archived instead of deleting.
     download_count = models.PositiveIntegerField(default=0)
     # Track how many times this file has been downloaded.
 
@@ -95,3 +107,20 @@ class StudentProfile(models.Model):
     def __str__(self):
         # Display the username and level for easy admin reading.
         return f"{self.user.username} - Level {self.level}"
+
+
+class EmailLog(models.Model):
+    """Record of outgoing email send attempts."""
+    subject = models.CharField(max_length=255)
+    body = models.TextField(blank=True)
+    from_email = models.CharField(max_length=255, blank=True)
+    recipients = models.TextField(blank=True)  # comma-separated
+    sent = models.BooleanField(default=False)
+    error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+
+    def __str__(self):
+        return f"{self.subject} -> {self.recipients} ({'sent' if self.sent else 'failed'})"
