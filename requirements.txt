@@ -3,9 +3,4 @@ Django
 sqlparse==0.5.5
 tzdata==2025.3
 gunicorn
-<<<<<<< HEAD
 openpyxl
-=======
-openpyxl
-python-dotenv
->>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
