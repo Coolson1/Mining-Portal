@@ -1,0 +1,5 @@
+.venv/
+env311/
+__pycache__/
+scripts/
+env311_old/
