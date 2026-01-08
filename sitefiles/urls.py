@@ -19,3 +19,6 @@ urlpatterns = [
 if settings.DEBUG:
     # In DEBUG mode, serve media files through Django for convenience.
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    
+
