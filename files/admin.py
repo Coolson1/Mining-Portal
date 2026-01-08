@@ -8,14 +8,7 @@ from django.core.mail import send_mail
 from django.contrib import messages
 import random, string
 from django.conf import settings
-<<<<<<< HEAD
-
 from .models import FileUpload, StudentProfile
-=======
-from .utils import send_email_and_log
-
-from .models import FileUpload, StudentProfile, EmailLog
->>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
 
 # openpyxl is optional; fall back to CSV export if not installed
 try:
@@ -30,24 +23,16 @@ except Exception:
 
 @admin.register(FileUpload)
 class FileUploadAdmin(admin.ModelAdmin):
-<<<<<<< HEAD
     list_display = ('title', 'level', 'semester', 'category', 'uploaded_at', 'download_count', 'uploaded_by')
-=======
-    list_display = ('title', 'level', 'semester', 'category', 'uploaded_at', 'download_count')
->>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
     list_filter = ('level', 'semester', 'category', 'archived')
     actions = ('archive_selected',)
     search_fields = ('title',)
 
-<<<<<<< HEAD
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         # Show only staff users in the uploaded_by dropdown
         if db_field.name == 'uploaded_by':
             kwargs['queryset'] = User.objects.filter(is_staff=True)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-=======
->>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
     def save_model(self, request, obj, form, change):
         if not change and getattr(obj, 'uploaded_by', None) is None:
             obj.uploaded_by = request.user
@@ -112,7 +97,6 @@ class UserAdmin(DjangoUserAdmin):
             user.set_password(pwd)
             user.save()
             if user.email:
-<<<<<<< HEAD
                 try:
                     res = send_mail(
                         'Your password has been reset',
@@ -125,20 +109,6 @@ class UserAdmin(DjangoUserAdmin):
                 except Exception as exc:
                     # swallow/logging handled by server; do not create EmailLog entries
                     pass
-=======
-                # Use helper to send email and create EmailLog with detailed errors on failure.
-                subject = 'Your password has been reset'
-                body = f'Hello {user.username},\n\nYour password has been reset by an admin. Temporary password: {pwd}\nPlease login and change your password.'
-                try:
-                    ok = send_email_and_log(subject, body, settings.DEFAULT_FROM_EMAIL, [user.email])
-                    # helper already records EmailLog; we only inform admin via messages
-                except Exception as exc:
-                    # As a last-resort fallback, record a failed EmailLog entry.
-                    try:
-                        EmailLog.objects.create(subject=subject, body=body, from_email=settings.DEFAULT_FROM_EMAIL, recipients=user.email, sent=False, error=str(exc))
-                    except Exception:
-                        pass
->>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
         self.message_user(request, 'Selected users have been reset and (if they have an email) notified.')
     reset_passwords.short_description = 'Reset password for selected users and email them'
 
@@ -213,14 +183,3 @@ try:
 except Exception:
     pass
 admin.site.register(User, UserAdmin)
-<<<<<<< HEAD
-=======
-
-
-@admin.register(EmailLog)
-class EmailLogAdmin(admin.ModelAdmin):
-    list_display = ('subject', 'recipients', 'sent', 'created_at')
-    readonly_fields = ('subject', 'body', 'from_email', 'recipients', 'sent', 'error', 'created_at')
-    search_fields = ('subject', 'recipients')
-    ordering = ('-created_at',)
->>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056

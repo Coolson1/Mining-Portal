@@ -122,11 +122,7 @@
                         <div class="icon-box">{{ f.category|slice:":1"|upper }}</div>
                         <div class="flex-grow-1">
                           <h5 class="card-title mb-1">{{ f.title }}</h5>
-<<<<<<< HEAD
                           <div class="meta text-muted small">Level {{ f.level }} • Semester {{ f.semester }} • {{ f.category|title }} • {{ f.file_type|upper }} • {{ f.file_size_display }} • Downloads: {{ f.download_count }}{% if f.uploaded_by %} • Uploaded by: {{ f.uploaded_by.get_full_name|default:f.uploaded_by.username }}{% else %} • Uploaded by: Admin{% endif %}</div>
-=======
-                          <div class="meta text-muted small">Level {{ f.level }} • Semester {{ f.semester }} • {{ f.category|title }} • {{ f.file_type|upper }} • {{ f.file_size_display }} • Downloads: {{ f.download_count }}</div>
->>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
                         </div>
                       </div>
                       <p class="mt-3 mb-0 text-truncate">Uploaded: {{ f.uploaded_at }}</p>
