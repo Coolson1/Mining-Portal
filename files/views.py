@@ -18,10 +18,15 @@ from django.conf import settings
 from collections import OrderedDict
 from django.utils import timezone
 # messages can show feedback to users on registration/login.
+<<<<<<< HEAD
+import shutil
+import datetime
+=======
 from django.core.mail import send_mail
 import shutil
 import datetime
 from .utils import send_email_and_log
+>>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
 
 
 def index(request, level=None, category=None, semester=None):
@@ -69,6 +74,32 @@ def index(request, level=None, category=None, semester=None):
             current_semester = None
 
     # Group files by date (YYYY-MM-DD) so the template can render a date header
+<<<<<<< HEAD
+    # followed by the files uploaded on that date. Make handling robust
+    # for naive vs aware datetimes so uploads on different dates separate correctly.
+    groups = OrderedDict()
+    for f in files_qs:
+        dt = f.uploaded_at
+        try:
+            if timezone.is_naive(dt):
+                aware = timezone.make_aware(dt, timezone.get_default_timezone())
+            else:
+                aware = dt
+            d = timezone.localtime(aware).date()
+        except Exception:
+            try:
+                d = dt.date()
+            except Exception:
+                d = None
+        key = d.strftime('%Y-%m-%d') if d is not None else f'unknown-{f.pk}'
+        groups.setdefault(key, []).append(f)
+
+    # Sort files in each date group alphabetically by first letter (case-insensitive),
+    # then by full title to stabilize ordering.
+    for k, lst in groups.items():
+        lst.sort(key=lambda obj: (((obj.title or '')[:1] or '').lower(), (obj.title or '').lower()))
+
+=======
     # followed by the files uploaded on that date.
     groups = OrderedDict()
     for f in files_qs:
@@ -80,6 +111,7 @@ def index(request, level=None, category=None, semester=None):
         key = d.strftime('%Y-%m-%d')
         groups.setdefault(key, []).append(f)
 
+>>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
     # Check for likely OneDrive-synced project folder which can overwrite db.sqlite3
     # and cause 'missing user' issues when files are synced across devices.
     db_path = settings.DATABASES.get('default', {}).get('NAME', '')
@@ -150,6 +182,9 @@ def register(request):
             except Exception:
                 pass
 
+<<<<<<< HEAD
+            # Do not send emails on registration and avoid showing email-sent alerts.
+=======
             # Send welcome email to the newly registered user and inform them
             user_email = form.cleaned_data.get('email')
             username = form.cleaned_data.get('username')
@@ -173,6 +208,7 @@ def register(request):
             else:
                 messages.info(request, 'Registration succeeded (no email provided).')
 
+>>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
             messages.success(request, 'Registration successful. Please log in.')
             return redirect('files:login')
     else:

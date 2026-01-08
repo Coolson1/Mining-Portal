@@ -1,5 +1,10 @@
 # Django settings for the project.
 import os
+<<<<<<< HEAD
+# os is used to construct file paths and interact with the environment.
+from pathlib import Path
+# Path provides an easy-to-use path API for filesystem paths.
+=======
 """os is used to access environment variables and construct paths."""
 from pathlib import Path
 """Path provides an easy-to-use path API for filesystem paths."""
@@ -13,6 +18,7 @@ try:
 except Exception:
     # If python-dotenv isn't installed or .env doesn't exist, continue silently.
     pass
+>>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
 
 # BASE_DIR is the root folder of the project (two levels up from this file).
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,8 +27,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'replace-this-with-a-secure-key-for-production'
 
 # SECURITY WARNING: don't run with debug turned on in production!
+<<<<<<< HEAD
+DEBUG = True
+=======
 # Allow overriding DEBUG with an environment variable. Defaults to True for development.
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('1', 'true', 'yes')
+>>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
 
 # Hosts allowed to serve the project; in development this can be empty or localhost.
 ALLOWED_HOSTS = ['*']
@@ -102,6 +112,25 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+<<<<<<< HEAD
+# Email settings: default to console backend for development. To send real emails
+# Email settings: use console backend by default for development. If you set
+# the environment variables `GMAIL_HOST_USER` and `GMAIL_APP_PASSWORD` the
+# project will automatically use Gmail SMTP with the provided app password.
+GMAIL_HOST_USER = os.environ.get('GMAIL_HOST_USER')
+GMAIL_APP_PASSWORD = os.environ.get('GMAIL_APP_PASSWORD')
+if GMAIL_HOST_USER and GMAIL_APP_PASSWORD:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = GMAIL_HOST_USER
+    EMAIL_HOST_PASSWORD = GMAIL_APP_PASSWORD
+    DEFAULT_FROM_EMAIL = GMAIL_HOST_USER
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'no-reply@fourahbay.example'
+=======
 # Email configuration: choose backend based on environment variables.
 # Priority order:
 # 1) If GMAIL_HOST_USER and GMAIL_APP_PASSWORD are set, use Gmail SMTP.
@@ -146,3 +175,4 @@ if not DEBUG and EMAIL_BACKEND == 'django.core.mail.backends.console.EmailBacken
         ),
         RuntimeWarning,
     )
+>>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
