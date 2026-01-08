@@ -25,6 +25,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'files.apps.FilesConfig',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 # Middleware processes requests/responses; keep Django defaults for now.
@@ -69,6 +71,12 @@ DATABASES = {
     }
 }
 
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUD_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUD_API_SECRET'),
+}
+
 # Password validation using Django's default validators (kept simple here).
 AUTH_PASSWORD_VALIDATORS = []
 
@@ -87,6 +95,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # Media files (user uploaded files) settings.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+if os.environ.get('ENVIRONMENT') == 'PRODUCTION':
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
