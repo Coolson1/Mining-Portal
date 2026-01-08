@@ -18,8 +18,15 @@ from django.conf import settings
 from collections import OrderedDict
 from django.utils import timezone
 # messages can show feedback to users on registration/login.
+<<<<<<< HEAD
 import shutil
 import datetime
+=======
+from django.core.mail import send_mail
+import shutil
+import datetime
+from .utils import send_email_and_log
+>>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
 
 
 def index(request, level=None, category=None, semester=None):
@@ -67,6 +74,7 @@ def index(request, level=None, category=None, semester=None):
             current_semester = None
 
     # Group files by date (YYYY-MM-DD) so the template can render a date header
+<<<<<<< HEAD
     # followed by the files uploaded on that date. Make handling robust
     # for naive vs aware datetimes so uploads on different dates separate correctly.
     groups = OrderedDict()
@@ -91,6 +99,19 @@ def index(request, level=None, category=None, semester=None):
     for k, lst in groups.items():
         lst.sort(key=lambda obj: (((obj.title or '')[:1] or '').lower(), (obj.title or '').lower()))
 
+=======
+    # followed by the files uploaded on that date.
+    groups = OrderedDict()
+    for f in files_qs:
+        # Use the timezone-aware date if available.
+        try:
+            d = timezone.localtime(f.uploaded_at).date()
+        except Exception:
+            d = f.uploaded_at.date()
+        key = d.strftime('%Y-%m-%d')
+        groups.setdefault(key, []).append(f)
+
+>>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
     # Check for likely OneDrive-synced project folder which can overwrite db.sqlite3
     # and cause 'missing user' issues when files are synced across devices.
     db_path = settings.DATABASES.get('default', {}).get('NAME', '')
@@ -161,7 +182,33 @@ def register(request):
             except Exception:
                 pass
 
+<<<<<<< HEAD
             # Do not send emails on registration and avoid showing email-sent alerts.
+=======
+            # Send welcome email to the newly registered user and inform them
+            user_email = form.cleaned_data.get('email')
+            username = form.cleaned_data.get('username')
+            if user_email:
+                # Use centralized helper to send and log the welcome email. The helper
+                # records a detailed traceback on failure in the EmailLog table.
+                try:
+                    ok = send_email_and_log(
+                        'Welsome to our platform',
+                        f'Hello {username}, thank you for registering.',
+                        settings.DEFAULT_FROM_EMAIL,
+                        [user_email],
+                    )
+                    if ok:
+                        messages.info(request, 'A welcome email was sent to your address.')
+                    else:
+                        messages.warning(request, 'Registration succeeded but we could not send a welcome email. Check server logs or EmailLog.')
+                except Exception:
+                    # Do not raise here; inform the user and continue registration flow.
+                    messages.warning(request, 'Registration succeeded but sending the welcome email failed. Please check email settings.')
+            else:
+                messages.info(request, 'Registration succeeded (no email provided).')
+
+>>>>>>> 851f815b28aefb73556c1cedd85f9d3afbb11056
             messages.success(request, 'Registration successful. Please log in.')
             return redirect('files:login')
     else:
