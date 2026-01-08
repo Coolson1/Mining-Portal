@@ -1,6 +1,11 @@
 # Django settings for the project.
 import os
 # os is used to construct file paths and interact with the environment.
+from dotenv import load_dotenv
+# load_dotenv loads environment variables from a .env file.
+load_dotenv()  # Load environment variables from .env file
+ENVIRONMENT = os.environ.get('ENVIRONMENT', 'DEVELOPMENT')
+DEBUG = ENVIRONMENT == 'DEVELOPMENT'
 from pathlib import Path
 # Path provides an easy-to-use path API for filesystem paths.
 
@@ -25,8 +30,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'files.apps.FilesConfig',
-    'cloudinary_storage',
     'cloudinary',
+    'cloudinary_storage',
 ]
 
 # Middleware processes requests/responses; keep Django defaults for now.
@@ -71,11 +76,6 @@ DATABASES = {
     }
 }
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUD_NAME'),
-    'API_KEY': os.environ.get('CLOUD_API_KEY'),
-    'API_SECRET': os.environ.get('CLOUD_API_SECRET'),
-}
 
 # Password validation using Django's default validators (kept simple here).
 AUTH_PASSWORD_VALIDATORS = []
@@ -97,7 +97,14 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 if os.environ.get('ENVIRONMENT') == 'PRODUCTION':
+    STATICFILES_STORAGE = 'cloudinary_storage.storage.StaticHashedCloudinaryStorage'
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUD_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUD_API_SECRET'),
+}
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
